@@ -1,0 +1,372 @@
+Date: 2/3/2025
+Time: 5:58
+Phone Number: +989352490619
+Message: test javad agah
+--------------------
+Date: 2/3/2025
+Time: 5:59
+Phone Number: +989352490619
+Message: test javad agah
+--------------------
+Date: 2/3/2025
+Time: 6:1
+Phone Number: +989352490619
+Message: test javad agah
+--------------------
+Date: 2/3/2025
+Time: 6:25
+Phone Number: +989128885103
+Message: تست
+--------------------
+Date: 2/3/2025
+Time: 6:33
+Phone Number: +989353033255
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 6:42
+Phone Number: +989128885103
+Message: تست
+--------------------
+Date: 2/3/2025
+Time: 6:47
+Phone Number: +989128885103
+Message: Bah bahhh
+--------------------
+Date: 2/3/2025
+Time: 7:59
+Phone Number: +989128885103
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 7:59
+Phone Number: +989128885103
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 8:2
+Phone Number: +989352490619
+Message: test
+--------------------
+Date: 2/3/2025
+Time: 20:48
+Phone Number: +989124783207
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 20:49
+Phone Number: +989124783207
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 20:50
+Phone Number: +989352490619
+Message: Twst
+--------------------
+Date: 2/3/2025
+Time: 20:52
+Phone Number: +989359291957
+Message: Erty
+--------------------
+Date: 2/3/2025
+Time: 21:1
+Phone Number: +989352490619
+Message: تست پیام گروهی در تلگرام از روی سرور
+--------------------
+Date: 2/3/2025
+Time: 21:3
+Phone Number: +989352490619
+Message: تستتست
+--------------------
+Date: 2/3/2025
+Time: 21:5
+Phone Number: +989352490619
+Image: C:\Users\mani\AppData\Local\Temp\tmppqlmg1by.jpg
+Caption: Test
+--------------------
+Date: 2/3/2025
+Time: 21:7
+Phone Number: +989352490619
+Image: C:\Users\mani\AppData\Local\Temp\tmp_o7ua9kp.jpg
+Caption: Tzst
+--------------------
+Date: 2/3/2025
+Time: 21:12
+Phone Number: +989352490619
+Message: Fdjdh
+--------------------
+Date: 2/3/2025
+Time: 21:16
+Phone Number: +989352490619
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:16
+Phone Number: +989124783207
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:16
+Phone Number: +989358883639
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:17
+Phone Number: +989428883639
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:21
+Phone Number: +989352490619
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:22
+Phone Number: +989124783207
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:22
+Phone Number: +989358883639
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:22
+Phone Number: +989428883639
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:34
+Phone Number: +989352490619
+Message: Tedt
+--------------------
+Date: 2/3/2025
+Time: 21:35
+Phone Number: +989352490619
+Message: YF
+--------------------
+Date: 2/3/2025
+Time: 21:37
+Phone Number: +989352490619
+Message: Teg
+--------------------
+Date: 2/3/2025
+Time: 21:41
+Phone Number: +989352490619
+Message: Tet
+--------------------
+Date: 2/3/2025
+Time: 21:42
+Phone Number: +989352490619
+Message: Test
+--------------------
+Date: 2/3/2025
+Time: 21:43
+Phone Number: +989352490619
+Message: Twst
+--------------------
+Date: 2/3/2025
+Time: 21:43
+Phone Number: +989124783207
+Message: Twst
+--------------------
+Date: 2/3/2025
+Time: 21:43
+Phone Number: +989358883639
+Message: Twst
+--------------------
+Date: 2/3/2025
+Time: 21:44
+Phone Number: +989428883639
+Message: Twst
+--------------------
+Date: 2/3/2025
+Time: 22:15
+Phone Number: +989352490619
+Message: Twst
+--------------------
+Date: 2/3/2025
+Time: 22:18
+Phone Number: +989352490619
+Message: Testtt
+--------------------
+Date: 2/3/2025
+Time: 22:21
+Phone Number: +989352490619
+Message: Testttt
+--------------------
+Date: 2/3/2025
+Time: 22:27
+Phone Number: +989352490619
+Message: Ttttt
+--------------------
+Date: 2/3/2025
+Time: 22:30
+Phone Number: +989352490619
+Message: Redtttj
+--------------------
+Date: 2/3/2025
+Time: 22:36
+Phone Number: +989352490619
+Message: Fre4
+--------------------
+Date: 2/3/2025
+Time: 22:39
+Phone Number: +989352490619
+Message: Iu
+--------------------
+Date: 2/3/2025
+Time: 22:44
+Phone Number: +983
+Message: C:\Users\mani\Desktop\whatsapp\api.py:132: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC). "timestamp": datetime.datetime.utcnow()
+--------------------
+Date: 2/3/2025
+Time: 22:47
+Phone Number: +989352490619
+Message: Text
+--------------------
+Date: 2/3/2025
+Time: 22:52
+Phone Number: +98test
+Message: testt
+--------------------
+Date: 4/3/2025
+Time: 4:59
+Phone Number: +989352490619
+Message: Ttt
+--------------------
+Date: 4/3/2025
+Time: 5:1
+Phone Number: +989352490619
+Message: Test
+--------------------
+Date: 4/3/2025
+Time: 5:6
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 4/3/2025
+Time: 5:10
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 4/3/2025
+Time: 5:16
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 4/3/2025
+Time: 5:44
+Phone Number: +9893588883639
+Message: Hhh
+--------------------
+Date: 4/3/2025
+Time: 9:0
+Phone Number: +989358883639
+Message: mani
+--------------------
+Date: 4/3/2025
+Time: 9:2
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 4/3/2025
+Time: 9:8
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 4/3/2025
+Time: 9:16
+Phone Number: +989358883639
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 9:17
+Phone Number: +989358883639
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 9:18
+Phone Number: +989126602987
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 9:19
+Phone Number: +989160304331
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 9:19
+Phone Number: +989358883639
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 9:21
+Phone Number: +989358883639
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 9:22
+Phone Number: +989358883639
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 11:35
+Phone Number: +989126602987
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 11:36
+Phone Number: +989160304331
+Message: ورود شما را به سامانه واتساپي کافه کد خوش آمد ميگوييم
+--------------------
+Date: 4/3/2025
+Time: 23:54
+Phone Number: +989358883639
+Message: Hi
+--------------------
+Date: 4/3/2025
+Time: 23:56
+Phone Number: +989358883639
+Message: Hi
+--------------------
+Date: 5/3/2025
+Time: 0:17
+Phone Number: +989358883639
+Message: به سامانه واتساپ کافه کد خوش آمديد
+--------------------
+Date: 5/3/2025
+Time: 0:18
+Phone Number: +989126602987
+Message: به سامانه واتساپ کافه کد خوش آمديد
+--------------------
+Date: 5/3/2025
+Time: 0:20
+Phone Number: +989358883639
+Message: M83038303a
+--------------------
+Date: 5/3/2025
+Time: 0:22
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 5/3/2025
+Time: 0:24
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 5/3/2025
+Time: 0:35
+Phone Number: +989358883639
+Message: te
+--------------------
+Date: 5/3/2025
+Time: 0:45
+Phone Number: +989358883639
+Message: test
+--------------------
+Date: 5/3/2025
+Time: 0:48
+Phone Number: +989358883639
+Message: test
+--------------------
