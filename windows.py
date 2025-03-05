@@ -10,33 +10,39 @@ import threading
 import json 
 import datetime
 import socket
+import os
+import base64
 from config import languages, current_lang, get_font
 from utils import copy_image_to_clipboard
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
 
+def send_log_to_api(phone, status, text, image_file_path=None):
+    # اگر وضعیت لاگ "sending..." باشد، ارسال نشود
+    if status.lower().strip() == "sending...":
+        return
 
-def save_log_to_mongodb(phone, status, text):
-    if status != 'sending...':
-        try:
-            client = MongoClient("mongodb://localhost:27017", server_api=ServerApi('1'))
-            db = client["whatsapp_marketing"]
-            collection = db["messages"]
-            log_entry = {
-                "timestamp": datetime.datetime.now().isoformat(),
-                "phone": phone,
-                "status": status,
-                "platform":'application',
-                "text": text, 
-                "system_ip": socket.gethostbyname(socket.gethostname())
-            }
-            collection.insert_one(log_entry)
-            return log_entry
-        except Exception as e:
-            print("Failed to save log to MongoDB:", e)
-            return None
-    else:
-        return None
+    url = "http://localhost:5000/api/logs"  # آدرس API دات‌نت؛ در صورت نیاز تغییر دهید.
+    log_data = {
+        "Timestamp": datetime.datetime.now().isoformat(),
+        "Phone": phone,
+        "Status": status,
+        "Platform": "application",  # همیشه "application"
+        "Text": text,
+        "SystemIp": socket.gethostbyname(socket.gethostname()),
+        "ImageBase64": ""
+    }
+    if image_file_path and os.path.exists(image_file_path):
+        with open(image_file_path, "rb") as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+            log_data["ImageBase64"] = encoded_string
+
+    try:
+        response = requests.post(url, json=log_data)
+        if response.status_code == 200:
+            print("Log sent successfully to API.")
+        else:
+            print("Error sending log to API:", response.text)
+    except Exception as e:
+        print("Exception sending log to API:", e)
 
 
 class PollWindow(ctk.CTkToplevel):
@@ -237,10 +243,7 @@ class SendProcessWindow(ctk.CTkToplevel):
                 if self.attachments:
                     caption_text = ""
                     if self.messages:
-                        caption_text = "\n".join([
-                            msg.replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", ""))
-                            for msg in self.messages
-                        ])
+                        caption_text = "\n".join([msg.replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", "")) for msg in self.messages])
                     for file in self.attachments:
                         pywhatkit.sendwhats_image(phone, file, caption=caption_text, wait_time=20, tab_close=True, close_time=3)
                         time.sleep(2)
@@ -260,9 +263,7 @@ class SendProcessWindow(ctk.CTkToplevel):
                         sent_text += f"Message sent: {personalized_msg}\n"
                 if self.polls:
                     for poll in self.polls:
-                        poll_text = "Poll: " + poll["question"] + "\n" + "\n".join(
-                            [f"{i+1}. {opt}" for i, opt in enumerate(poll["options"])]
-                        )
+                        poll_text = "Poll: " + poll["question"] + "\n" + "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(poll["options"])])
                         pywhatkit.sendwhatmsg_instantly(phone, poll_text, wait_time=12, tab_close=True, close_time=3)
                         time.sleep(8)
                         pyautogui.press("enter")
@@ -277,7 +278,7 @@ class SendProcessWindow(ctk.CTkToplevel):
         self.start_button.configure(state="normal")
         messagebox.showinfo("Info", "Sending process finished!")
 
-    def update_log(self, chat_name, status, message_text=""):
+    def update_log(self, chat_name, status, message_text="", image_file_path=None):
         self.log_tree.insert("", tk.END, values=(chat_name, status))
         self.log_tree.update_idletasks()
         log_entry = {
@@ -285,13 +286,14 @@ class SendProcessWindow(ctk.CTkToplevel):
             "phone": chat_name,
             "status": status,
             "text": message_text,
-            "platform":'application',
+            "platform": "application",
             "system_ip": socket.gethostbyname(socket.gethostname())
         }
         self.log_data.append(log_entry)
         with open("logs.json", "w", encoding="utf-8") as f:
             json.dump(self.log_data, f, ensure_ascii=False, indent=4)
-        save_log_to_mongodb(chat_name, status, message_text)
+        # ارسال لاگ به API دات‌نت تنها در صورت عدم وجود وضعیت "sending..."
+        send_log_to_api(chat_name, status, message_text, image_file_path)
 
 
 class SingleMessageWindow(ctk.CTkToplevel):
@@ -345,9 +347,9 @@ class SingleMessageWindow(ctk.CTkToplevel):
             pywhatkit.sendwhatmsg_instantly(phone, message, wait_time=10, tab_close=True, close_time=3)
             time.sleep(5)
             pyautogui.press("enter")
-            save_log_to_mongodb(phone, "Success", message)
+            send_log_to_api(phone, "Success", message)
             messagebox.showinfo("Info", languages[current_lang]["success_sent"])
             self.destroy()
         except Exception as e:
-            save_log_to_mongodb(phone, f"Failed: {e}", message)
+            send_log_to_api(phone, f"Failed: {e}", message)
             messagebox.showerror("Error", f"{languages[current_lang]['error_sending']} {e}")
