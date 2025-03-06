@@ -7,7 +7,6 @@ from utils import SpinboxAlternative
 from config import languages, current_lang, get_font, get_ttk_font, get_ttk_heading_font
 from styles import apply_styles
 
-
 class WhatsAppMarketingApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -99,7 +98,6 @@ class WhatsAppMarketingApp(ctk.CTk):
         self.translate_var = tk.BooleanVar(value=False)
         translate_checkbox = ctk.CTkCheckBox(translate_frame, text="Arabic", variable=self.translate_var, command=self.translate_to_arabic, font=get_font(14), text_color="white")
         translate_checkbox.pack(side="left", padx=5)
-
 
         translate_frame_english = ctk.CTkFrame(center_frame, fg_color="#3a3f47")
         translate_frame_english.grid(row=3, column=1, padx=10, pady=5, sticky="we")
@@ -221,15 +219,12 @@ class WhatsAppMarketingApp(ctk.CTk):
         sheet["B1"] = "Name"
         sheet["A2"] = "+989358883639"
         sheet["B2"] = "maniagah"
-        sheet["A3"] = "+989126602987"
-        sheet["B3"] = "maniagah"
-        sheet["A4"] = "+989160304331"
-        sheet["B4"] = "maniagah"
-        sheet["A5"] = "+989010522180"
-        sheet["B5"] = "maniagah"
-        sheet["A6"] = "+989128885103"
-        sheet["B6"] = "maniagah"
-
+        sheet["A3"] = "+989353033255"
+        sheet["B3"] = "melisa"
+        sheet["A4"] = "+989352490619"
+        sheet["B4"] = "javad"
+        sheet["A5"] = "+989124783207"
+        sheet["B5"] = "nazi"
 
         workbook.save(sample_path)
         messagebox.showinfo(languages[current_lang]["title"], f"Sample Excel saved as {sample_path}")

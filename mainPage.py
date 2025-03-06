@@ -599,16 +599,18 @@ class WhatsAppMarketingApp(ctk.CTk):
         sheet = workbook.active
         sheet["A1"] = "Number"
         sheet["B1"] = "Name"
-        sheet["A2"] = "+989352490619"
-        sheet["B2"] = "javad agah"
-        sheet["A3"] = "+989124783207"
-        sheet["B3"] = "nazi zomorodi"
-        sheet["A4"] = "+989358883639"
-        sheet["B4"] = "mani agah"
-        sheet["A5"] = "+989428883639"
-        sheet["B5"] = "test"
-        sheet["A6"] = "+989353033255"
-        sheet["B6"] = "melisa"
+        # sheet["A2"] = "+989352490619"
+        # sheet["B2"] = "javad agah"
+        # sheet["A3"] = "+989124783207"
+        # sheet["B3"] = "nazi zomorodi"
+        # sheet["A4"] = "+989358883639"
+        # sheet["B4"] = "mani agah"
+        # sheet["A5"] = "+989428883639"
+        # sheet["B5"] = "test"
+        # sheet["A6"] = "+989353033255"
+        # sheet["B6"] = "melisa"
+        sheet['A2'] = "+989128885103"
+        sheet['B2'] = 'saman ghahreman'
         workbook.save(sample_path)
         messagebox.showinfo(languages[current_lang]["title"], f"Sample Excel saved as {sample_path}")
 

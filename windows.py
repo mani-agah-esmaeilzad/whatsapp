@@ -1,49 +1,9 @@
 import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox
-import requests
-import webbrowser
-import pywhatkit
-import pyautogui
-import time
-import threading
-import json 
-import datetime
-import socket
-import os
-import base64
+import threading, time, socket, datetime, json
 from config import languages, current_lang, get_font
-from utils import copy_image_to_clipboard
-
-def send_log_to_api(phone, status, text, image_file_path=None):
-    # اگر وضعیت لاگ "sending..." باشد، ارسال نشود
-    if status.lower().strip() == "sending...":
-        return
-
-    url = "http://localhost:5000/api/logs"  # آدرس API دات‌نت؛ در صورت نیاز تغییر دهید.
-    log_data = {
-        "Timestamp": datetime.datetime.now().isoformat(),
-        "Phone": phone,
-        "Status": status,
-        "Platform": "application",  # همیشه "application"
-        "Text": text,
-        "SystemIp": socket.gethostbyname(socket.gethostname()),
-        "ImageBase64": ""
-    }
-    if image_file_path and os.path.exists(image_file_path):
-        with open(image_file_path, "rb") as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
-            log_data["ImageBase64"] = encoded_string
-
-    try:
-        response = requests.post(url, json=log_data)
-        if response.status_code == 200:
-            print("Log sent successfully to API.")
-        else:
-            print("Error sending log to API:", response.text)
-    except Exception as e:
-        print("Exception sending log to API:", e)
-
+import whatsapp_bot
 
 class PollWindow(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -102,13 +62,10 @@ class PollWindow(ctk.CTkToplevel):
         )
         self.destroy()
 
-
 class SendProcessWindow(ctk.CTkToplevel):
     def __init__(self, parent, numbers_list, messages, attachments, polls, delay_seconds, delay_every_msgs, mode):
         super().__init__(parent)
-        self.attributes("-fullscreen", False)
         self.transient(parent)
-        self.lift()
         self.grab_set()
         self.title("Run")
         self.geometry("900x550")
@@ -121,20 +78,18 @@ class SendProcessWindow(ctk.CTkToplevel):
         self.mode = mode
         self.paused = False
         self.stopped = False
-        self.current_index = 0
-
         self.log_data = []
-
+        
         top_frame = ctk.CTkFrame(self, fg_color="#1f2833", corner_radius=10)
         top_frame.pack(fill="x", pady=10, padx=10)
         initiate_label = ctk.CTkLabel(
             top_frame, 
-            text="Initiate WhatsApp & Scan QR Code from your mobile", 
+            text="Initiate WhatsApp & Scan QR Code" if current_lang == "English" else "اتصال به واتساپ و اسکن QR", 
             font=get_font(14, "bold"), 
             text_color="white"
         )
         initiate_label.pack(side="left", padx=10, pady=10)
-        self.status_label = ctk.CTkLabel(top_frame, text="Status: Indicated", font=get_font(14), text_color="white")
+        self.status_label = ctk.CTkLabel(top_frame, text="Status: Not Connected", font=get_font(14), text_color="white")
         self.status_label.pack(side="right", padx=10)
         self.initiate_button = ctk.CTkButton(
             top_frame, 
@@ -195,27 +150,28 @@ class SendProcessWindow(ctk.CTkToplevel):
         notes_frame.pack(fill="x", padx=10, pady=10)
         notes_label = ctk.CTkLabel(
             notes_frame, 
-            text=("Important Notes:\n1) Make sure your WhatsApp Web is logged in.\n2) Keep your phone connected to the internet.\n3) Do not close the browser tab during sending.\n"), 
+            text=("Important Notes:\n1) Make sure your WhatsApp Web is authenticated.\n2) The sending process will run in background without showing WhatsApp." 
+                  if current_lang == "English" 
+                  else "نکات مهم:\n1) مطمئن شوید که واتساپ وب احراز هویت شده است.\n2) عملیات ارسال در پس‌زمینه اجرا می‌شود و واتساپ نشان داده نخواهد شد."), 
             font=get_font(12), 
             justify="left", 
             text_color="white"
         )
         notes_label.pack(side="left", padx=10, pady=10)
-
+        
     def initiate_connection(self):
         try:
-            response = requests.get("https://web.whatsapp.com", timeout=5)
-            if response.status_code == 200:
-                self.status_label.configure(text="Status: Connected")
-                webbrowser.open("https://web.whatsapp.com")
-            else:
-                self.status_label.configure(text="Status: Disconnected")
-                messagebox.showwarning("Warning", "Connection error. Check internet or WhatsApp login.")
+            whatsapp_bot.initiate_connection()
+            self.status_label.configure(text="Status: Connected")
+            messagebox.showinfo("Info", "WhatsApp initiated and QR scanned successfully.")
         except Exception as e:
-            self.status_label.configure(text="Status: Disconnected")
+            self.status_label.configure(text="Status: Connection Failed")
             messagebox.showerror("Error", f"Connection error: {e}")
 
     def start_sending(self):
+        if self.status_label.cget("text") != "Status: Connected":
+            messagebox.showerror("Error", "Please initiate WhatsApp connection first.")
+            return
         self.paused = False
         self.stopped = False
         self.start_button.configure(state="disabled")
@@ -229,6 +185,7 @@ class SendProcessWindow(ctk.CTkToplevel):
         self.stopped = True
 
     def send_messages(self):
+        driver = whatsapp_bot.load_driver_headless()
         total = len(self.numbers_list)
         for idx, contact in enumerate(self.numbers_list, start=1):
             if self.stopped:
@@ -236,49 +193,24 @@ class SendProcessWindow(ctk.CTkToplevel):
             while self.paused and not self.stopped:
                 time.sleep(0.5)
             phone = contact["number"]
-            # ثبت لاگ اولیه قبل از ارسال
-            self.update_log(phone, "Sending...", "")
-            sent_text = ""
-            try:
-                if self.attachments:
-                    caption_text = ""
-                    if self.messages:
-                        caption_text = "\n".join([msg.replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", "")) for msg in self.messages])
-                    for file in self.attachments:
-                        pywhatkit.sendwhats_image(phone, file, caption=caption_text, wait_time=20, tab_close=True, close_time=3)
-                        time.sleep(2)
-                        copy_image_to_clipboard(file)
-                        time.sleep(1)
-                        pyautogui.hotkey("ctrl", "v")
-                        time.sleep(1)
-                        pyautogui.press("enter")
-                        time.sleep(5)
-                    sent_text += f"Attachment(s) sent with caption: {caption_text}\n"
-                elif self.messages:
-                    for msg in self.messages:
-                        personalized_msg = msg.replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", ""))
-                        pywhatkit.sendwhatmsg_instantly(phone, personalized_msg, wait_time=12, tab_close=True, close_time=3)
-                        time.sleep(8)
-                        pyautogui.press("enter")
-                        sent_text += f"Message sent: {personalized_msg}\n"
-                if self.polls:
-                    for poll in self.polls:
-                        poll_text = "Poll: " + poll["question"] + "\n" + "\n".join([f"{i+1}. {opt}" for i, opt in enumerate(poll["options"])])
-                        pywhatkit.sendwhatmsg_instantly(phone, poll_text, wait_time=12, tab_close=True, close_time=3)
-                        time.sleep(8)
-                        pyautogui.press("enter")
-                        sent_text += f"Poll sent: {poll_text}\n"
-                self.update_log(phone, "Success", sent_text)
-            except Exception as e:
-                self.update_log(phone, f"Failed: {e}", sent_text)
+            if self.messages:
+                msg = self.messages[0].replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", ""))
+                try:
+                    whatsapp_bot.send_message(driver, phone, msg)
+                    self.update_log(phone, "Success", f"Message sent: {msg}")
+                except Exception as e:
+                    self.update_log(phone, f"Failed: {e}", "")
             percent = int((idx / total) * 100)
             self.progress_label.configure(text=f"{percent}% Completed [{idx}/{total}]")
             if (idx % self.delay_every_msgs == 0) and (idx < total):
                 time.sleep(self.delay_seconds)
+        driver.quit()
         self.start_button.configure(state="normal")
         messagebox.showinfo("Info", "Sending process finished!")
 
-    def update_log(self, chat_name, status, message_text="", image_file_path=None):
+    def update_log(self, chat_name, status, message_text=""):
+        if not message_text.strip():
+            return
         self.log_tree.insert("", tk.END, values=(chat_name, status))
         self.log_tree.update_idletasks()
         log_entry = {
@@ -287,21 +219,16 @@ class SendProcessWindow(ctk.CTkToplevel):
             "status": status,
             "text": message_text,
             "platform": "application",
-            "system_ip": socket.gethostbyname(socket.gethostname())
+            "systemIp": socket.gethostbyname(socket.gethostname())
         }
         self.log_data.append(log_entry)
         with open("logs.json", "w", encoding="utf-8") as f:
             json.dump(self.log_data, f, ensure_ascii=False, indent=4)
-        # ارسال لاگ به API دات‌نت تنها در صورت عدم وجود وضعیت "sending..."
-        send_log_to_api(chat_name, status, message_text, image_file_path)
-
 
 class SingleMessageWindow(ctk.CTkToplevel):
     def __init__(self, parent):
         super().__init__(parent)
-        self.attributes("-fullscreen", False)
         self.transient(parent)
-        self.lift()
         self.grab_set()
         self.title("Send Single Message" if current_lang == "English" else "ارسال پیام تکی")
         self.geometry("500x400")
@@ -344,12 +271,10 @@ class SingleMessageWindow(ctk.CTkToplevel):
             messagebox.showerror("Error", languages[current_lang]["error_empty"])
             return
         try:
-            pywhatkit.sendwhatmsg_instantly(phone, message, wait_time=10, tab_close=True, close_time=3)
-            time.sleep(5)
-            pyautogui.press("enter")
-            send_log_to_api(phone, "Success", message)
+            driver = whatsapp_bot.load_driver_headless()
+            whatsapp_bot.send_message(driver, phone, message)
+            driver.quit()
             messagebox.showinfo("Info", languages[current_lang]["success_sent"])
             self.destroy()
         except Exception as e:
-            send_log_to_api(phone, f"Failed: {e}", message)
             messagebox.showerror("Error", f"{languages[current_lang]['error_sending']} {e}")

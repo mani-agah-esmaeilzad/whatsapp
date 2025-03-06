@@ -5,7 +5,6 @@ import tkinter as tk
 import win32clipboard
 from deep_translator import GoogleTranslator
 
-
 def copy_image_to_clipboard(image_path):
     try:
         image = Image.open(image_path)
@@ -19,7 +18,6 @@ def copy_image_to_clipboard(image_path):
         win32clipboard.CloseClipboard()
     except Exception as e:
         print(f"Error copying image to clipboard: {e}")
-
 
 class SpinboxAlternative(ctk.CTkFrame):
     def __init__(self, parent, from_=1, to=9999, width=60, textvariable=None, **kwargs):
@@ -54,7 +52,6 @@ class SpinboxAlternative(ctk.CTkFrame):
         if value > self.from_:
             value -= 1
         self.var.set(value)
-
 
 def translate_to_arabic(textboxes, translate_var):
     if translate_var.get():

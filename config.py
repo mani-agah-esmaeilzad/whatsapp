@@ -84,20 +84,17 @@ languages = {
 
 current_lang = "English"
 
-
 def get_font(size, weight="normal"):
     if current_lang == "Persian":
         return ctk.CTkFont(family="vazir", size=size, weight=weight)
     else:
         return ctk.CTkFont(family="Segoe UI", size=size, weight=weight)
 
-
 def get_ttk_font():
     if current_lang == "Persian":
         return ("vazir", 12)
     else:
         return ("Segoe UI", 12)
-
 
 def get_ttk_heading_font():
     if current_lang == "Persian":

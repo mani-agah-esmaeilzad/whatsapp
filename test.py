@@ -1,15 +1,18 @@
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
+import requests
 
-uri = "mongodb+srv://Mani:28mxjpU36PAdb8e4@cluster0.39dczpy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+url = "https://urban-waffle-6pgqvpq6v4v396w-5181.app.github.dev/api/logs"
+headers = {"Content-Type": "application/json"}
+data = {
+    "Timestamp": "2025-03-05T16:41:19Z",
+    "Phone": "+1234567890",
+    "Status": "success",
+    "Platform": "application",
+    "Text": "Test message",
+    "SystemIp": "192.168.1.1",
+    "ImageBase64": "iVBORw0KGgoAAAANSUhEUgAA..."
+}
 
+response = requests.post(url, headers=headers, json=data)
 
-# Create a new client and connect to the server
-client = MongoClient(uri, server_api=ServerApi('1'))
-
-# Send a ping to confirm a successful connection
-try:
-    client.admin.command('ping')
-    print("Pinged your deployment. You successfully connected to MongoDB!")
-except Exception as e:
-    print(e)
+print(response.status_code)
+print(response.json())
