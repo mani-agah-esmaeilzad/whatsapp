@@ -4,6 +4,9 @@ import time
 import json
 import os
 from urllib.parse import quote
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 SESSION_FILE = "whatsapp_session.json"
 
@@ -48,8 +51,9 @@ def send_message(driver, phone, message):
     time.sleep(5)  # صبر برای بارگذاری صفحه
     try:
         # پیدا کردن جعبه ورودی و ارسال کلید Enter جهت ارسال پیام
-        input_box = driver.find_element("xpath", "//div[@contenteditable='true']")
-        input_box.send_keys("\n")
+        input_box = WebDriverWait(driver, 15).until(
+        EC.presence_of_element_located((By.XPATH, '//div[@contenteditable="true"]'))
+        )
         time.sleep(2)
     except Exception as e:
         print("Error sending message:", e)
