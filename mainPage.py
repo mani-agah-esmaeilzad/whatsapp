@@ -5,6 +5,8 @@ import tkinter as tk
 from tkinter import messagebox, filedialog, ttk
 import customtkinter as ctk
 import openpyxl
+import requests
+import socket
 
 # Selenium Imports
 from selenium import webdriver
@@ -24,7 +26,7 @@ languages = {
         "connection_status_default": "Connection Status: Unknown",
         "error_connection": "Connection error. Please check your internet or WhatsApp login.",
         "error_empty": "No phone, message, or poll to send.",
-        "success_sent": "All messages have been sent!",
+        "success_sent": "Message sent successfully!",
         "error_sending": "Error sending message:",
         "exit_button": "Exit",
         "upload_excel": "Upload Excel",
@@ -55,6 +57,8 @@ languages = {
         "attachment_type": "Attachment Type",
         "image": "Image",
         "sticker": "Sticker",
+        "mp3": "MP3",
+        "video": "Video",
         "run_page_title": "Single Message Run",
         "initiate_qr": "Initiate WhatsApp & Scan QR Code from your mobile",
         "click_to_initiate": "CLICK TO INITIATE",
@@ -68,7 +72,7 @@ languages = {
         "connection_status_default": "وضعیت اتصال: نامشخص",
         "error_connection": "خطا در اتصال. لطفاً اینترنت یا ورود به واتساپ را بررسی کنید.",
         "error_empty": "شماره، پیام یا نظرسنجی برای ارسال وجود ندارد.",
-        "success_sent": "تمام پیام‌ها ارسال شدند!",
+        "success_sent": "پیام با موفقیت ارسال شد!",
         "error_sending": "خطا در ارسال پیام:",
         "exit_button": "خروج",
         "upload_excel": "بارگذاری اکسل",
@@ -99,6 +103,8 @@ languages = {
         "attachment_type": "نوع پیوست",
         "image": "عکس",
         "sticker": "استیکر",
+        "mp3": "MP3",
+        "video": "ویدیو",
         "run_page_title": "ارسال پیام تکی",
         "initiate_qr": "واتساپ را راه‌اندازی کرده و کد QR را از گوشی اسکن کنید",
         "click_to_initiate": "برای شروع کلیک کنید",
@@ -112,7 +118,7 @@ languages = {
         "connection_status_default": "حالة الاتصال: غير محددة",
         "error_connection": "خطأ في الاتصال. يرجى التحقق من الإنترنت أو تسجيل الدخول إلى واتساپ.",
         "error_empty": "لا يوجد رقم أو رسالة أو استطلاع للإرسال.",
-        "success_sent": "تم إرسال جميع الرسائل!",
+        "success_sent": "تم إرسال الرسالة بنجاح!",
         "error_sending": "خطأ في إرسال الرسالة:",
         "exit_button": "خروج",
         "upload_excel": "تحميل إكسل",
@@ -143,6 +149,8 @@ languages = {
         "attachment_type": "نوع المرفق",
         "image": "صورة",
         "sticker": "ملصق",
+        "mp3": "MP3",
+        "video": "فيديو",
         "run_page_title": "تشغيل رسالة فردية",
         "initiate_qr": "ابدأ واتساب وامسح رمز الاستجابة السريعة من هاتفك",
         "click_to_initiate": "انقر للبدء",
@@ -187,10 +195,54 @@ def get_ttk_heading_font():
         return ("Segoe UI", 12, "bold")
 
 # ============================
+# دریافت آدرس آیپی سیستم
+# ============================
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+# ============================
+# ارسال لاگ به API دات نت
+# ============================
+def send_log_to_api(phone, status, message_text=""):
+    if status == "Sending...":
+        return
+    ip = get_local_ip()
+    url = "https://maniagah.ir/api/logs"  # آدرس API دات نت (تنظیم به نیاز شما)
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+    data = {
+        "Phone": phone,
+        "Status": status,
+        "Platform": "application",
+        "Text": message_text,
+        "SystemIp": ip,
+        "subscriptionType": "Free"
+    }
+    try:
+        response = requests.post(url, json=data, headers=headers, verify=False)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error sending log to API: {e}")
+
+# ============================
 # ویجت جایگزین Spinbox
 # ============================
 class SpinboxAlternative(ctk.CTkFrame):
     def __init__(self, parent, from_=1, to=9999, width=60, textvariable=None, **kwargs):
+        # Remove unsupported arguments from kwargs
+        button_color = kwargs.pop('button_color', '#e94560')
+        button_hover_color = kwargs.pop('button_hover_color', '#b81d3d')
+        
         super().__init__(parent, **kwargs)
         self.from_ = from_
         self.to = to
@@ -198,11 +250,31 @@ class SpinboxAlternative(ctk.CTkFrame):
             self.var = tk.IntVar(value=self.from_)
         else:
             self.var = textvariable
-        self.btn_minus = ctk.CTkButton(self, text="-", width=30, command=self.decrement, corner_radius=5)
+            
+        # Configure buttons with proper styling
+        self.btn_minus = ctk.CTkButton(
+            self, 
+            text="-", 
+            width=30, 
+            command=self.decrement, 
+            corner_radius=5,
+            fg_color=button_color,
+            hover_color=button_hover_color
+        )
         self.btn_minus.grid(row=0, column=0, padx=2)
+        
         self.entry = ctk.CTkEntry(self, width=width, textvariable=self.var)
         self.entry.grid(row=0, column=1, padx=2)
-        self.btn_plus = ctk.CTkButton(self, text="+", width=30, command=self.increment, corner_radius=5)
+        
+        self.btn_plus = ctk.CTkButton(
+            self, 
+            text="+", 
+            width=30, 
+            command=self.increment, 
+            corner_radius=5,
+            fg_color=button_color,
+            hover_color=button_hover_color
+        )
         self.btn_plus.grid(row=0, column=2, padx=2)
     
     def increment(self):
@@ -296,7 +368,7 @@ class SendProcessWindow(ctk.CTkToplevel):
         initiate_label.pack(side="left", padx=10, pady=10)
         self.status_label = ctk.CTkLabel(top_frame, text=languages[current_lang]["connection_status_default"], font=get_font(14), text_color="white")
         self.status_label.pack(side="right", padx=10)
-        self.initiate_button = ctk.CTkButton(top_frame, text="CLICK TO INITIATE", fg_color="#0078AA", command=self.initiate_connection, corner_radius=5)
+        self.initiate_button = ctk.CTkButton(top_frame, text=languages[current_lang]["click_to_initiate"], fg_color="#0078AA", command=self.initiate_connection, corner_radius=5)
         self.initiate_button.pack(side="left", padx=10)
         
         # --- Middle Frame: Control Buttons & Progress ---
@@ -383,7 +455,7 @@ class SendProcessWindow(ctk.CTkToplevel):
                 self.driver.get(f"https://web.whatsapp.com/send?phone={phone}")
                 time.sleep(3)
                 if self.attachments:
-                    att_type = self.master.attachment_type.get() if hasattr(self.master, "attachment_type") else "Image"
+                    att_type = self.master.attachment_type.get() if hasattr(self.master, "attachment_type") else languages[current_lang]["image"]
                     if att_type == languages[current_lang]["image"]:
                         try:
                             attach_button = WebDriverWait(self.driver, 30).until(
@@ -427,17 +499,68 @@ class SendProcessWindow(ctk.CTkToplevel):
                             time.sleep(2)
                         except Exception as e:
                             self.update_log(phone, f"Sticker send failed: {e}")
+                    elif att_type == languages[current_lang]["mp3"]:
+                        try:
+                            attach_button = WebDriverWait(self.driver, 30).until(
+                                EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
+                            )
+                            attach_button.click()
+                            file_input = WebDriverWait(self.driver, 30).until(
+                                EC.presence_of_element_located((By.XPATH, "//input[@accept='audio/*']"))
+                            )
+                            file_input.send_keys(self.attachments[0])
+                            time.sleep(5)
+                            send_button = WebDriverWait(self.driver, 30).until(
+                                EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']"))
+                            )
+                            send_button.click()
+                            time.sleep(2)
+                        except Exception as e:
+                            self.update_log(phone, f"MP3 send failed: {e}")
+                    elif att_type == languages[current_lang]["video"]:
+                        try:
+                            attach_button = WebDriverWait(self.driver, 30).until(
+                                EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
+                            )
+                            attach_button.click()
+                            file_input = WebDriverWait(self.driver, 30).until(
+                                EC.presence_of_element_located((By.XPATH, "//input[@accept='image/*,video/mp4,video/3gpp,video/quicktime']"))
+                            )
+                            file_input.send_keys(self.attachments[0])
+                            time.sleep(5)
+                            caption = " ".join(self.messages) if self.messages else " "
+                            caption_box = WebDriverWait(self.driver, 10).until(
+                                EC.visibility_of_element_located((By.XPATH, "//div[@contenteditable='true'][@data-tab='10']"))
+                            )
+                            caption_box.clear()
+                            caption_box.send_keys(caption)
+                            send_button = WebDriverWait(self.driver, 30).until(
+                                EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']"))
+                            )
+                            send_button.click()
+                            time.sleep(2)
+                        except Exception as e:
+                            self.update_log(phone, f"Video send failed: {e}")
                 else:
                     message_box = WebDriverWait(self.driver, 30).until(
                         EC.presence_of_element_located((By.XPATH, "//footer//div[@contenteditable='true']"))
                     )
                     message_box.click()
                     time.sleep(0.5)
-                    for msg in self.messages:
-                        personalized_msg = msg.replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", ""))
-                        message_box.send_keys(personalized_msg)
-                        message_box.send_keys(Keys.ENTER)
-                        time.sleep(1)
+                    # Combine all messages with line breaks
+                    combined_message = "\n".join(self.messages)
+                    # Replace placeholders in the combined message
+                    personalized_msg = combined_message.replace("{NAME}", contact.get("name", "")).replace("{NUMBER}", contact.get("number", ""))
+                    # Split into lines and send with proper line breaks
+                    lines = personalized_msg.split('\n')
+                    for i, line in enumerate(lines):
+                        message_box.send_keys(line)
+                        if i < len(lines) - 1:  # If not the last line
+                            ActionChains(self.driver).key_down(Keys.SHIFT).send_keys(Keys.ENTER).key_up(Keys.SHIFT).perform()
+                            time.sleep(0.1)
+                    # Send the final message
+                    message_box.send_keys(Keys.ENTER)
+                    time.sleep(1)
                 self.update_log(phone, "Success")
             except Exception as e:
                 self.update_log(phone, f"Failed: {e}")
@@ -449,9 +572,36 @@ class SendProcessWindow(ctk.CTkToplevel):
     def update_log(self, chat_name, status):
         self.log_tree.insert("", tk.END, values=(chat_name, status))
         self.log_tree.update_idletasks()
+        if status != "Sending...":
+            message_text = " ".join(self.messages) if self.messages else ""
+            send_log_to_api(chat_name, status, message_text)
 
 # ============================
-# پنجره ارسال پیام تکی (صفحه ورودی اطلاعات)
+# تابع ترجمه متن (با استفاده از API گوگل)
+# ============================
+def translate_text(text, target_lang):
+    try:
+        url = "https://translate.googleapis.com/translate_a/single"
+        params = {
+            "client": "gtx",
+            "sl": "auto",
+            "tl": target_lang,
+            "dt": "t",
+            "q": text
+        }
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            result = response.json()
+            translated_text = ''.join([segment[0] for segment in result[0] if segment[0]])
+            return translated_text
+        else:
+            return None
+    except Exception as e:
+        print("Translation error:", e)
+        return None
+
+# ============================
+# پنجره ارسال پیام تکی (ورودی)
 # ============================
 class SingleMessageInputWindow(ctk.CTkToplevel):
     def __init__(self, parent):
@@ -464,7 +614,7 @@ class SingleMessageInputWindow(ctk.CTkToplevel):
             self.title("إرسال رسالة فردية")
         else:
             self.title("Send Single Message")
-        self.geometry("500x400")
+        self.geometry("500x500")
         self.attachment_path = None
         
         # ورودی شماره تلفن
@@ -487,12 +637,29 @@ class SingleMessageInputWindow(ctk.CTkToplevel):
         attach_button = ctk.CTkButton(self, text=languages[current_lang]["add_file"], command=self.attach_file, fg_color="#0078AA", corner_radius=5, font=get_font(14))
         attach_button.pack(padx=10, pady=5)
         
+        # دکمه‌های ترجمه برای پیام تکی
+        if current_lang == "Persian":
+            translate_arabic_text = "ترجمه به عربی"
+            translate_english_text = "ترجمه به انگلیسی"
+        elif current_lang == "Arabic":
+            translate_arabic_text = "ترجمة إلى العربية"
+            translate_english_text = "ترجمة إلى الإنجليزية"
+        else:
+            translate_arabic_text = "Translate to Arabic"
+            translate_english_text = "Translate to English"
+            
+        translate_arabic_button = ctk.CTkButton(self, text=translate_arabic_text, command=self.translate_to_arabic, fg_color="#0078AA", corner_radius=5, font=get_font(14))
+        translate_arabic_button.pack(padx=10, pady=5)
+        
+        translate_english_button = ctk.CTkButton(self, text=translate_english_text, command=self.translate_to_english, fg_color="#0078AA", corner_radius=5, font=get_font(14))
+        translate_english_button.pack(padx=10, pady=5)
+        
         # دکمه برای رفتن به صفحه ران ارسال پیام تکی
         proceed_button = ctk.CTkButton(self, text=languages[current_lang]["send_button"], command=self.proceed_to_run, fg_color="#4CAF50", corner_radius=5, font=get_font(14, "bold"))
         proceed_button.pack(padx=10, pady=10)
     
     def attach_file(self):
-        file_path = filedialog.askopenfilename(title=languages[current_lang]["add_file"], filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.gif")])
+        file_path = filedialog.askopenfilename(title=languages[current_lang]["add_file"], filetypes=[("Image Files", "*.png;*.jpg;*.jpeg;*.gif"), ("Audio Files", "*.mp3"), ("Video Files", "*.mp4;*.avi;*.mov")])
         if file_path:
             self.attachment_path = file_path
             messagebox.showinfo("Info", f"Attached: {os.path.basename(file_path)}")
@@ -503,13 +670,38 @@ class SingleMessageInputWindow(ctk.CTkToplevel):
         if not phone or not message:
             messagebox.showerror("Error", languages[current_lang]["error_empty"])
             return
-        # اصلاح شماره تلفن
         corrected_phone = self.master.correct_phone_number(phone)
-        # در صورت تایید، به صفحه ارسال پیام تکی (Run Page) می‌رویم
         if messagebox.askyesno("Confirm", languages[current_lang]["confirm_send"]):
             run_window = SingleMessageRunWindow(self.master, corrected_phone, message, self.attachment_path)
             self.destroy()
+    
+    def translate_to_arabic(self):
+        original_text = self.message_textbox.get("1.0", "end").strip()
+        if not original_text:
+            messagebox.showwarning("Warning", "No text to translate.")
+            return
+        translated = translate_text(original_text, "ar")
+        if translated:
+            self.message_textbox.delete("1.0", "end")
+            self.message_textbox.insert("end", translated)
+        else:
+            messagebox.showerror("Error", "Translation to Arabic failed.")
+    
+    def translate_to_english(self):
+        original_text = self.message_textbox.get("1.0", "end").strip()
+        if not original_text:
+            messagebox.showwarning("Warning", "No text to translate.")
+            return
+        translated = translate_text(original_text, "en")
+        if translated:
+            self.message_textbox.delete("1.0", "end")
+            self.message_textbox.insert("end", translated)
+        else:
+            messagebox.showerror("Error", "Translation to English failed.")
 
+# ============================
+# پنجره ارسال پیام تکی (صفحه اجرا)
+# ============================
 class SingleMessageRunWindow(ctk.CTkToplevel):
     def __init__(self, parent, phone, message, attachment):
         super().__init__(parent)
@@ -593,55 +785,133 @@ class SingleMessageRunWindow(ctk.CTkToplevel):
             self.driver.get(f"https://web.whatsapp.com/send?phone={self.phone}")
             time.sleep(3)
             if self.attachment:
-                try:
-                    attach_button = WebDriverWait(self.driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
-                    )
-                    attach_button.click()
-                    file_input = WebDriverWait(self.driver, 30).until(
-                        EC.presence_of_element_located((By.XPATH, "//input[@accept='image/*']"))
-                    )
-                    file_input.send_keys(self.attachment)
-                    time.sleep(5)
-                    caption_box = WebDriverWait(self.driver, 10).until(
-                        EC.visibility_of_element_located((By.XPATH, "//div[@contenteditable='true'][@data-tab='10']"))
-                    )
-                    caption_box.clear()
-                    caption_box.send_keys(self.message)
-                    send_button = WebDriverWait(self.driver, 30).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Send photo')]"))
-                    )
-                    self.driver.execute_script("arguments[0].click();", send_button)
-                    ActionChains(self.driver).send_keys(Keys.ENTER).perform()
-                    time.sleep(2)
-                except Exception as e:
-                    self.update_log(f"Attachment send failed: {e}")
-                    return
+                att_type = self.master.attachment_type.get() if hasattr(self.master, "attachment_type") else languages[current_lang]["image"]
+                if att_type == languages[current_lang]["image"]:
+                    try:
+                        attach_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
+                        )
+                        attach_button.click()
+                        file_input = WebDriverWait(self.driver, 30).until(
+                            EC.presence_of_element_located((By.XPATH, "//input[@accept='image/*']"))
+                        )
+                        file_input.send_keys(self.attachment)
+                        time.sleep(5)
+                        caption_box = WebDriverWait(self.driver, 10).until(
+                            EC.visibility_of_element_located((By.XPATH, "//div[@contenteditable='true'][@data-tab='10']"))
+                        )
+                        caption_box.clear()
+                        caption_box.send_keys(self.message)
+                        send_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Send photo')]"))
+                        )
+                        self.driver.execute_script("arguments[0].click();", send_button)
+                        ActionChains(self.driver).send_keys(Keys.ENTER).perform()
+                        time.sleep(2)
+                    except Exception as e:
+                        self.update_log(f"Image send failed: {e}")
+                        return
+                elif att_type == languages[current_lang]["sticker"]:
+                    try:
+                        attach_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
+                        )
+                        attach_button.click()
+                        file_input = WebDriverWait(self.driver, 30).until(
+                            EC.presence_of_element_located((By.XPATH, "//input[@accept='image/*']"))
+                        )
+                        file_input.send_keys(self.attachment)
+                        time.sleep(5)
+                        send_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']"))
+                        )
+                        send_button.click()
+                        time.sleep(2)
+                    except Exception as e:
+                        self.update_log(f"Sticker send failed: {e}")
+                elif att_type == languages[current_lang]["mp3"]:
+                    try:
+                        attach_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
+                        )
+                        attach_button.click()
+                        file_input = WebDriverWait(self.driver, 30).until(
+                            EC.presence_of_element_located((By.XPATH, "//input[@accept='audio/*']"))
+                        )
+                        file_input.send_keys(self.attachment)
+                        time.sleep(5)
+                        send_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Send'] | //span[@data-icon='send']"))
+                        )
+                        send_button.click()
+                        time.sleep(2)
+                    except Exception as e:
+                        self.update_log(f"MP3 send failed: {e}")
+                elif att_type == languages[current_lang]["video"]:
+                    try:
+                        attach_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@title='Attach']"))
+                        )
+                        attach_button.click()
+                        file_input = WebDriverWait(self.driver, 30).until(
+                            EC.presence_of_element_located((By.XPATH, "//input[@accept='video/*']"))
+                        )
+                        file_input.send_keys(self.attachment)
+                        time.sleep(5)
+                        caption_box = WebDriverWait(self.driver, 10).until(
+                            EC.visibility_of_element_located((By.XPATH, "//div[@contenteditable='true'][@data-tab='10']"))
+                        )
+                        caption_box.clear()
+                        caption_box.send_keys(self.message)
+                        send_button = WebDriverWait(self.driver, 30).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[contains(@aria-label, 'Send')]"))
+                        )
+                        send_button.click()
+                        time.sleep(2)
+                    except Exception as e:
+                        self.update_log(f"Video send failed: {e}")
             else:
                 message_box = WebDriverWait(self.driver, 30).until(
                     EC.presence_of_element_located((By.XPATH, "//footer//div[@contenteditable='true']"))
                 )
                 message_box.click()
                 time.sleep(0.5)
-                message_box.send_keys(self.message)
-                message_box.send_keys(Keys.ENTER)
-                time.sleep(1)
-            self.update_log(languages[current_lang]["single_sent_success"])
+                # Combine all messages with line breaks
+                combined_message = "\n".join(self.messages)
+                # Replace placeholders in the combined message
+                personalized_msg = combined_message.replace("{NAME}", self.phone).replace("{NUMBER}", self.phone)
+                # Split into lines and send with proper line breaks
+                lines = personalized_msg.split('\n')
+                for i, line in enumerate(lines):
+                    message_box.send_keys(line)
+                    if i < len(lines) - 1:  # If not the last line
+                        ActionChains(self.driver).key_down(Keys.SHIFT).send_keys(Keys.ENTER).key_up(Keys.SHIFT).perform()
+                        time.sleep(0.1)
+                    # Send the final message
+                    message_box.send_keys(Keys.ENTER)
+                    time.sleep(1)
+                self.update_log(languages[current_lang]["single_sent_success"])
         except Exception as e:
             self.update_log(f"{languages[current_lang]['error_sending']} {e}")
     
     def update_log(self, status):
         self.log_tree.insert("", tk.END, values=(status,))
         self.log_tree.update_idletasks()
+        if status != "Sending...":
+            send_log_to_api(self.phone, status, self.message)
     
     def on_close(self):
         if self.driver:
             self.driver.quit()
         self.destroy()
 
+# ============================
+# کلاس اصلی برنامه
+# ============================
 class WhatsAppMarketingApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        # Set window to maximized state instead of fullscreen
         self.state("zoomed")
         self.title(languages[current_lang]["title"])
         self.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -651,9 +921,12 @@ class WhatsAppMarketingApp(ctk.CTk):
         self.delay_seconds = tk.IntVar(value=3)
         self.delay_every_msgs = tk.IntVar(value=5)
         self.send_mode_var = tk.StringVar(value="Manual")
-        self.attachment_type = tk.StringVar(value="Image")
+        self.attachment_type = tk.StringVar(value=languages[current_lang]["image"])
         self.textboxes = []
         self.driver = None
+        
+        # Set minimum window size to a more reasonable value
+        self.minsize(800, 600)
         
         self.create_ui()
         self.apply_fullscreen_style()
@@ -663,130 +936,475 @@ class WhatsAppMarketingApp(ctk.CTk):
         style.configure("Custom.Treeview.Heading", background="#1f2833", foreground="white", font=get_ttk_heading_font())
         style.map("Custom.Treeview", background=[("selected", "#3a3f47")])
     
-    def correct_phone_number(self, number):
-        number = number.strip()
-        if number.startswith("+98"):
-            return number
-        elif number.startswith("0098"):
-            return "+98" + number[4:]
-        elif number.startswith("09"):
-            return "+989" + number[2:]
-        elif number.startswith("9"):
-            return "+98" + number
-        else:
-            return number
-        
     def apply_fullscreen_style(self):
-        self.configure(bg="#2c3e50")
+        # Get screen dimensions
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        
+        # Configure grid weights for better scaling
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        
+        # Configure main background color
+        self.configure(bg="#1a1a2e")
     
     def create_ui(self):
-        top_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#1f2833", height=60)
-        top_frame.pack(side="top", fill="x", padx=10, pady=10)
-        title_label = ctk.CTkLabel(top_frame, text=languages[current_lang]["title"], font=get_font(22, "bold"), text_color="white")
-        title_label.pack(side="left", padx=10)
-        options_frame = ctk.CTkFrame(top_frame, corner_radius=0, fg_color="#1f2833")
-        options_frame.pack(side="right", padx=10)
-        appearance_option_menu = ctk.CTkOptionMenu(options_frame, values=["Light", "Dark"], command=self.change_appearance_mode, width=120, font=get_font(14))
-        appearance_option_menu.set("Dark")
-        appearance_option_menu.pack(side="left", padx=5)
-        language_option_menu = ctk.CTkOptionMenu(options_frame, values=["English", "Persian", "Arabic"], command=self.change_language, width=120, font=get_font(14))
-        language_option_menu.set(languages[current_lang]["language_option"])
-        language_option_menu.pack(side="left", padx=5)
+        # Main background color
+        self.configure(bg="#1a1a2e")
         
-        main_frame = ctk.CTkFrame(self, fg_color="#20232a", corner_radius=10)
+        # Top Frame with gradient effect and reduced height
+        top_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#16213e", height=60)
+        top_frame.pack(side="top", fill="x", padx=10, pady=10)
+        
+        # Title with reduced font size
+        title_label = ctk.CTkLabel(
+            top_frame, 
+            text=languages[current_lang]["title"], 
+            font=get_font(24, "bold"), 
+            text_color="#e94560"
+        )
+        title_label.pack(side="left", padx=20)
+        
+        # Options frame with modern styling
+        options_frame = ctk.CTkFrame(top_frame, corner_radius=0, fg_color="#16213e")
+        options_frame.pack(side="right", padx=20)
+        
+        # Modern styled option menus with reduced size
+        appearance_option_menu = ctk.CTkOptionMenu(
+            options_frame, 
+            values=["Light", "Dark"], 
+            command=self.change_appearance_mode, 
+            width=120, 
+            height=30,
+            font=get_font(12),
+            fg_color="#1f2937",
+            button_color="#e94560",
+            button_hover_color="#b81d3d"
+        )
+        appearance_option_menu.set("Dark")
+        appearance_option_menu.pack(side="left", padx=10)
+        
+        language_option_menu = ctk.CTkOptionMenu(
+            options_frame, 
+            values=["English", "Persian", "Arabic"], 
+            command=self.change_language, 
+            width=120, 
+            height=30,
+            font=get_font(12),
+            fg_color="#1f2937",
+            button_color="#e94560",
+            button_hover_color="#b81d3d"
+        )
+        language_option_menu.set(languages[current_lang]["language_option"])
+        language_option_menu.pack(side="left", padx=10)
+        
+        # Main content frame with reduced padding
+        main_frame = ctk.CTkFrame(self, fg_color="#1f2937", corner_radius=15)
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
         main_frame.grid_columnconfigure(1, weight=1)
         main_frame.grid_rowconfigure(0, weight=1)
         
-        left_frame = ctk.CTkFrame(main_frame, corner_radius=10, fg_color="#3a3f47", width=300)
-        left_frame.grid(row=0, column=0, sticky="nswe", padx=5, pady=5)
-        target_label = ctk.CTkLabel(left_frame, text=languages[current_lang]["target_label"], font=get_font(20, "bold"), text_color="white")
-        target_label.pack(padx=10, pady=10)
-        button_frame = ctk.CTkFrame(left_frame, fg_color="#3a3f47")
-        button_frame.pack(padx=10, pady=5, fill="x")
-        upload_button = ctk.CTkButton(button_frame, text=languages[current_lang]["upload_excel"], command=self.upload_excel, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        upload_button.pack(side="left", padx=5)
-        download_sample_button = ctk.CTkButton(button_frame, text=languages[current_lang]["download_sample_excel"], command=self.download_sample_excel, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        download_sample_button.pack(side="left", padx=5)
-        self.numbers_tree = ttk.Treeview(left_frame, columns=("number", "name"), show="headings", style="Custom.Treeview", height=15)
+        # Left Panel - Targets with reduced width
+        left_frame = ctk.CTkFrame(main_frame, corner_radius=15, fg_color="#2d3748", width=250)
+        left_frame.grid(row=0, column=0, sticky="nswe", padx=10, pady=10)
+        
+        # Modern styled target label with reduced font size
+        target_label = ctk.CTkLabel(
+            left_frame, 
+            text=languages[current_lang]["target_label"], 
+            font=get_font(20, "bold"), 
+            text_color="#e94560"
+        )
+        target_label.pack(padx=15, pady=15)
+        
+        # Button frame with reduced padding
+        button_frame = ctk.CTkFrame(left_frame, fg_color="#2d3748")
+        button_frame.pack(padx=15, pady=10, fill="x")
+        
+        # Modern styled buttons with reduced size
+        upload_button = ctk.CTkButton(
+            button_frame, 
+            text=languages[current_lang]["upload_excel"], 
+            command=self.upload_excel, 
+            fg_color="#e94560", 
+            hover_color="#b81d3d",
+            corner_radius=8, 
+            height=35,
+            font=get_font(12, "bold")
+        )
+        upload_button.pack(side="left", padx=5, fill="x", expand=True)
+        
+        download_sample_button = ctk.CTkButton(
+            button_frame, 
+            text=languages[current_lang]["download_sample_excel"], 
+            command=self.download_sample_excel, 
+            fg_color="#4a5568", 
+            hover_color="#2d3748",
+            corner_radius=8, 
+            height=35,
+            font=get_font(12, "bold")
+        )
+        download_sample_button.pack(side="left", padx=5, fill="x", expand=True)
+        
+        # Modern styled treeview with reduced height
+        self.numbers_tree = ttk.Treeview(
+            left_frame, 
+            columns=("number", "name"), 
+            show="headings", 
+            style="Custom.Treeview", 
+            height=15
+        )
         self.numbers_tree.heading("number", text=languages[current_lang]["number_column"])
         self.numbers_tree.heading("name", text=languages[current_lang]["name_column"])
         self.numbers_tree.column("number", width=120)
         self.numbers_tree.column("name", width=120)
-        self.numbers_tree.pack(fill="both", expand=True, padx=10, pady=10)
+        self.numbers_tree.pack(fill="both", expand=True, padx=15, pady=10)
         
-        # Center Panel: پیام‌ها و نظرسنجی
-        center_frame = ctk.CTkFrame(main_frame, corner_radius=10, fg_color="#3a3f47")
-        center_frame.grid(row=0, column=1, sticky="nswe", padx=5, pady=5)
-        message_label = ctk.CTkLabel(center_frame, text=languages[current_lang]["message_section"], font=get_font(20, "bold"), text_color="white")
-        message_label.pack(padx=10, pady=10)
-        self.message_notebook = ctk.CTkTabview(center_frame, width=600, height=300)
-        self.message_notebook.pack(padx=10, pady=5, fill="both", expand=True)
+        # Center Panel - Messages with reduced width
+        center_frame = ctk.CTkFrame(main_frame, corner_radius=15, fg_color="#2d3748")
+        center_frame.grid(row=0, column=1, sticky="nswe", padx=10, pady=10)
+        
+        # Modern styled message label with reduced font size
+        message_label = ctk.CTkLabel(
+            center_frame, 
+            text=languages[current_lang]["message_section"], 
+            font=get_font(20, "bold"), 
+            text_color="#e94560"
+        )
+        message_label.pack(padx=15, pady=15)
+        
+        # Modern styled notebook with reduced size
+        self.message_notebook = ctk.CTkTabview(
+            center_frame, 
+            width=500, 
+            height=300,
+            fg_color="#1f2937",
+            corner_radius=8
+        )
+        self.message_notebook.pack(padx=15, pady=10, fill="both", expand=True)
+        
+        # Style the tabs with reduced size
+        self.message_notebook._tabview_button_fg_color = "#4a5568"
+        self.message_notebook._tabview_button_hover_color = "#2d3748"
+        self.message_notebook._tabview_button_selected_color = "#e94560"
+        self.message_notebook._tabview_button_height = 35
+        self.message_notebook._tabview_button_font = get_font(12, "bold")
+        
         self.textboxes = []
         for i in range(1, 6):
             tab_name = f"{languages[current_lang]['message_tab']} {i}"
             tab = self.message_notebook.add(tab_name)
-            textbox = ctk.CTkTextbox(tab, width=580, height=250, wrap="word", font=get_font(14))
+            textbox = ctk.CTkTextbox(
+                tab, 
+                width=480, 
+                height=250, 
+                wrap="word", 
+                font=get_font(12),
+                fg_color="#1f2937",
+                text_color="#e2e8f0"
+            )
             textbox.pack(fill="both", expand=True, padx=10, pady=10)
             self.textboxes.append(textbox)
-        polls_buttons_frame = ctk.CTkFrame(center_frame, fg_color="#3a3f47")
-        polls_buttons_frame.pack(padx=10, pady=5, fill="x")
-        polls_label = ctk.CTkLabel(polls_buttons_frame, text=languages[current_lang]["polls"], font=get_font(16), text_color="white")
-        polls_label.pack(side="left", padx=5)
-        add_poll_button = ctk.CTkButton(polls_buttons_frame, text=languages[current_lang]["add_poll"], width=100, command=self.open_poll_window, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        add_poll_button.pack(side="left", padx=5)
-        buttons_label = ctk.CTkLabel(polls_buttons_frame, text=languages[current_lang]["buttons"], font=get_font(16), text_color="white")
-        buttons_label.pack(side="left", padx=5)
-        add_button_button = ctk.CTkButton(polls_buttons_frame, text=languages[current_lang]["add_button"], width=100, command=self.placeholder_action, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        add_button_button.pack(side="left", padx=5)
         
-        # Right Panel: پیوست‌ها
-        right_frame = ctk.CTkFrame(main_frame, corner_radius=10, fg_color="#3a3f47", width=300)
-        right_frame.grid(row=0, column=2, sticky="nswe", padx=5, pady=5)
-        attachments_label = ctk.CTkLabel(right_frame, text=languages[current_lang]["attachments"], font=get_font(20, "bold"), text_color="white")
-        attachments_label.pack(padx=10, pady=10)
-        add_file_button = ctk.CTkButton(right_frame, text=languages[current_lang]["add_file"], command=self.add_attachment, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        add_file_button.pack(padx=10, pady=5)
-        attachment_type_label = ctk.CTkLabel(right_frame, text=languages[current_lang]["attachment_type"], font=get_font(14), text_color="white")
-        attachment_type_label.pack(padx=10, pady=(10, 0))
-        attachment_type_menu = ctk.CTkOptionMenu(right_frame, variable=self.attachment_type, values=[languages[current_lang]["image"], languages[current_lang]["sticker"]], width=120, font=get_font(14))
+        # Translation buttons with modern styling and increased size
+        translate_frame = ctk.CTkFrame(center_frame, fg_color="#2d3748")
+        translate_frame.pack(padx=20, pady=15, fill="x")
+        
+        # Define translation text based on current language
+        if current_lang == "Persian":
+            translate_arabic_text = "ترجمه همه پیام‌ها به عربی"
+            translate_english_text = "ترجمه همه پیام‌ها به انگلیسی"
+        elif current_lang == "Arabic":
+            translate_arabic_text = "ترجمة كل الرسائل إلى العربية"
+            translate_english_text = "ترجمة كل الرسائل إلى الإنجليزية"
+        else:
+            translate_arabic_text = "Translate all messages to Arabic"
+            translate_english_text = "Translate all messages to English"
+        
+        translate_arabic_group_button = ctk.CTkButton(
+            translate_frame, 
+            text=translate_arabic_text, 
+            command=self.translate_group_to_arabic, 
+            fg_color="#4a5568", 
+            hover_color="#2d3748",
+            corner_radius=10, 
+            height=40,
+            font=get_font(14, "bold")
+        )
+        translate_arabic_group_button.pack(side="left", padx=5, fill="x", expand=True)
+        
+        translate_english_group_button = ctk.CTkButton(
+            translate_frame, 
+            text=translate_english_text, 
+            command=self.translate_group_to_english, 
+            fg_color="#4a5568", 
+            hover_color="#2d3748",
+            corner_radius=10, 
+            height=40,
+            font=get_font(14, "bold")
+        )
+        translate_english_group_button.pack(side="left", padx=5, fill="x", expand=True)
+        
+        # Polls and buttons section with modern styling and increased spacing
+        polls_buttons_frame = ctk.CTkFrame(center_frame, fg_color="#2d3748")
+        polls_buttons_frame.pack(padx=20, pady=15, fill="x")
+        
+        polls_label = ctk.CTkLabel(
+            polls_buttons_frame, 
+            text=languages[current_lang]["polls"], 
+            font=get_font(18, "bold"), 
+            text_color="#e94560"
+        )
+        polls_label.pack(side="left", padx=15)
+        
+        add_poll_button = ctk.CTkButton(
+            polls_buttons_frame, 
+            text=languages[current_lang]["add_poll"], 
+            width=150, 
+            height=40,
+            command=self.open_poll_window, 
+            fg_color="#e94560", 
+            hover_color="#b81d3d",
+            corner_radius=10, 
+            font=get_font(14, "bold")
+        )
+        add_poll_button.pack(side="left", padx=10)
+        
+        buttons_label = ctk.CTkLabel(
+            polls_buttons_frame, 
+            text=languages[current_lang]["buttons"], 
+            font=get_font(18, "bold"), 
+            text_color="#e94560"
+        )
+        buttons_label.pack(side="left", padx=15)
+        
+        add_button_button = ctk.CTkButton(
+            polls_buttons_frame, 
+            text=languages[current_lang]["add_button"], 
+            width=150, 
+            height=40,
+            command=self.placeholder_action, 
+            fg_color="#e94560", 
+            hover_color="#b81d3d",
+            corner_radius=10, 
+            font=get_font(14, "bold")
+        )
+        add_button_button.pack(side="left", padx=10)
+        
+        # Right Panel - Attachments with increased width
+        right_frame = ctk.CTkFrame(main_frame, corner_radius=15, fg_color="#2d3748", width=350)
+        right_frame.grid(row=0, column=2, sticky="nswe", padx=15, pady=15)
+        
+        attachments_label = ctk.CTkLabel(
+            right_frame, 
+            text=languages[current_lang]["attachments"], 
+            font=get_font(24, "bold"), 
+            text_color="#e94560"
+        )
+        attachments_label.pack(padx=20, pady=20)
+        
+        # Modern styled add file button with increased size
+        add_file_button = ctk.CTkButton(
+            right_frame, 
+            text=languages[current_lang]["add_file"], 
+            command=self.add_attachment, 
+            fg_color="#e94560", 
+            hover_color="#b81d3d",
+            corner_radius=10, 
+            height=40,
+            font=get_font(14, "bold")
+        )
+        add_file_button.pack(padx=20, pady=15)
+        
+        # Modern styled attachment type label and menu with increased size
+        attachment_type_label = ctk.CTkLabel(
+            right_frame, 
+            text=languages[current_lang]["attachment_type"], 
+            font=get_font(16, "bold"), 
+            text_color="#e2e8f0"
+        )
+        attachment_type_label.pack(padx=20, pady=(15, 0))
+        
+        attachment_type_menu = ctk.CTkOptionMenu(
+            right_frame, 
+            variable=self.attachment_type, 
+            values=[languages[current_lang]["image"], languages[current_lang]["sticker"], languages[current_lang]["mp3"], languages[current_lang]["video"]], 
+            width=150, 
+            height=35,
+            font=get_font(14),
+            fg_color="#1f2937",
+            button_color="#e94560",
+            button_hover_color="#b81d3d"
+        )
         attachment_type_menu.set(languages[current_lang]["image"])
-        attachment_type_menu.pack(padx=10, pady=5)
-        self.attachments_tree = ttk.Treeview(right_frame, columns=("file",), show="headings", style="Custom.Treeview", height=15)
-        self.attachments_tree.heading("file", text="File")
-        self.attachments_tree.column("file", width=150)
-        self.attachments_tree.pack(fill="both", expand=True, padx=10, pady=10)
+        attachment_type_menu.pack(padx=20, pady=10)
         
-        # Bottom Panel: تنظیمات تأخیر و حالت ارسال
-        bottom_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#1f2833")
-        bottom_frame.pack(side="bottom", fill="x", padx=10, pady=10)
-        custom_frame = ctk.CTkFrame(bottom_frame, corner_radius=0, fg_color="#1f2833")
-        custom_frame.pack(fill="x", padx=10, pady=10)
-        delay_frame = ctk.CTkFrame(custom_frame, corner_radius=10, fg_color="#3a3f47")
-        delay_frame.pack(side="left", padx=10, pady=5)
-        delay_label = ctk.CTkLabel(delay_frame, text=languages[current_lang]["delay_settings"], font=get_font(16, "bold"), text_color="white")
-        delay_label.grid(row=0, column=0, columnspan=5, padx=5, pady=5)
-        ctk.CTkLabel(delay_frame, text=languages[current_lang]["wait_label"], font=get_font(14), text_color="white").grid(row=1, column=0, padx=5, pady=5)
-        delay_spin = SpinboxAlternative(delay_frame, from_=1, to=9999, width=60, textvariable=self.delay_seconds)
-        delay_spin.grid(row=1, column=1, padx=5, pady=5)
-        ctk.CTkLabel(delay_frame, text=languages[current_lang]["seconds_after_every"], font=get_font(14), text_color="white").grid(row=1, column=2, padx=5, pady=5)
-        msgs_spin = SpinboxAlternative(delay_frame, from_=1, to=9999, width=60, textvariable=self.delay_every_msgs)
-        msgs_spin.grid(row=1, column=3, padx=5, pady=5)
-        ctk.CTkLabel(delay_frame, text=languages[current_lang]["messages_label"], font=get_font(14), text_color="white").grid(row=1, column=4, padx=5, pady=5)
-        send_mode_frame = ctk.CTkFrame(custom_frame, corner_radius=10, fg_color="#3a3f47")
-        send_mode_frame.pack(side="left", padx=10, pady=5)
-        send_mode_label = ctk.CTkLabel(send_mode_frame, text=languages[current_lang]["send_mode"], font=get_font(16, "bold"), text_color="white")
-        send_mode_label.grid(row=0, column=0, columnspan=2, padx=5, pady=5)
-        manual_radio = ctk.CTkRadioButton(send_mode_frame, text=languages[current_lang]["manual"], variable=self.send_mode_var, value="Manual", font=get_font(14), text_color="white")
-        manual_radio.grid(row=1, column=0, padx=5, pady=5)
-        auto_radio = ctk.CTkRadioButton(send_mode_frame, text=languages[current_lang]["auto"], variable=self.send_mode_var, value="Auto", font=get_font(14), text_color="white")
-        auto_radio.grid(row=1, column=1, padx=5, pady=5)
-        group_send_button = ctk.CTkButton(custom_frame, text=languages[current_lang]["group_send"], command=self.open_process_window, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        group_send_button.pack(side="left", padx=10, pady=5)
-        single_send_button = ctk.CTkButton(custom_frame, text=languages[current_lang]["single_send"], command=self.open_single_message_window, fg_color="#0078AA", corner_radius=5, font=get_font(14))
-        single_send_button.pack(side="left", padx=10, pady=5)
-        exit_button = ctk.CTkButton(custom_frame, text=languages[current_lang]["exit_button"], command=self.on_close, fg_color="#F44336", corner_radius=5, font=get_font(14))
-        exit_button.pack(side="right", padx=10, pady=5)
+        # Modern styled attachments tree with increased height
+        self.attachments_tree = ttk.Treeview(
+            right_frame, 
+            columns=("file",), 
+            show="headings", 
+            style="Custom.Treeview", 
+            height=20
+        )
+        self.attachments_tree.heading("file", text="File")
+        self.attachments_tree.column("file", width=200)
+        self.attachments_tree.pack(fill="both", expand=True, padx=20, pady=15)
+        
+        # Bottom Panel - Settings with increased height
+        bottom_frame = ctk.CTkFrame(self, corner_radius=0, fg_color="#16213e")
+        bottom_frame.pack(side="bottom", fill="x", padx=20, pady=20)
+        
+        custom_frame = ctk.CTkFrame(bottom_frame, corner_radius=0, fg_color="#16213e")
+        custom_frame.pack(fill="x", padx=20, pady=20)
+        
+        # Delay settings with modern styling and increased spacing
+        delay_frame = ctk.CTkFrame(custom_frame, corner_radius=15, fg_color="#2d3748")
+        delay_frame.pack(side="left", padx=15, pady=10)
+        
+        delay_label = ctk.CTkLabel(
+            delay_frame, 
+            text=languages[current_lang]["delay_settings"], 
+            font=get_font(18, "bold"), 
+            text_color="#e94560"
+        )
+        delay_label.grid(row=0, column=0, columnspan=5, padx=15, pady=15)
+        
+        ctk.CTkLabel(
+            delay_frame, 
+            text=languages[current_lang]["wait_label"], 
+            font=get_font(14), 
+            text_color="#e2e8f0"
+        ).grid(row=1, column=0, padx=10, pady=10)
+        
+        delay_spin = SpinboxAlternative(
+            delay_frame, 
+            from_=1, 
+            to=9999, 
+            width=80, 
+            textvariable=self.delay_seconds,
+            fg_color="#1f2937",
+            button_color="#e94560",
+            button_hover_color="#b81d3d"
+        )
+        delay_spin.grid(row=1, column=1, padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            delay_frame, 
+            text=languages[current_lang]["seconds_after_every"], 
+            font=get_font(14), 
+            text_color="#e2e8f0"
+        ).grid(row=1, column=2, padx=10, pady=10)
+        
+        msgs_spin = SpinboxAlternative(
+            delay_frame, 
+            from_=1, 
+            to=9999, 
+            width=80, 
+            textvariable=self.delay_every_msgs,
+            fg_color="#1f2937",
+            button_color="#e94560",
+            button_hover_color="#b81d3d"
+        )
+        msgs_spin.grid(row=1, column=3, padx=10, pady=10)
+        
+        ctk.CTkLabel(
+            delay_frame, 
+            text=languages[current_lang]["messages_label"], 
+            font=get_font(14), 
+            text_color="#e2e8f0"
+        ).grid(row=1, column=4, padx=10, pady=10)
+        
+        # Send mode with modern styling and increased spacing
+        send_mode_frame = ctk.CTkFrame(custom_frame, corner_radius=15, fg_color="#2d3748")
+        send_mode_frame.pack(side="left", padx=15, pady=10)
+        
+        send_mode_label = ctk.CTkLabel(
+            send_mode_frame, 
+            text=languages[current_lang]["send_mode"], 
+            font=get_font(18, "bold"), 
+            text_color="#e94560"
+        )
+        send_mode_label.grid(row=0, column=0, columnspan=2, padx=15, pady=10)
+        
+        manual_radio = ctk.CTkRadioButton(
+            send_mode_frame, 
+            text=languages[current_lang]["manual"], 
+            variable=self.send_mode_var, 
+            value="Manual", 
+            font=get_font(14), 
+            text_color="#e2e8f0",
+            fg_color="#e94560",
+            hover_color="#b81d3d"
+        )
+        manual_radio.grid(row=1, column=0, padx=10, pady=10)
+        
+        auto_radio = ctk.CTkRadioButton(
+            send_mode_frame, 
+            text=languages[current_lang]["auto"], 
+            variable=self.send_mode_var, 
+            value="Auto", 
+            font=get_font(14), 
+            text_color="#e2e8f0",
+            fg_color="#e94560",
+            hover_color="#b81d3d"
+        )
+        auto_radio.grid(row=1, column=1, padx=10, pady=10)
+        
+        # Action buttons with modern styling and increased size
+        group_send_button = ctk.CTkButton(
+            custom_frame, 
+            text=languages[current_lang]["group_send"], 
+            command=self.open_process_window, 
+            fg_color="#e94560", 
+            hover_color="#b81d3d",
+            corner_radius=10, 
+            height=40,
+            font=get_font(14, "bold")
+        )
+        group_send_button.pack(side="left", padx=15, pady=10)
+        
+        single_send_button = ctk.CTkButton(
+            custom_frame, 
+            text=languages[current_lang]["single_send"], 
+            command=self.open_single_message_window, 
+            fg_color="#e94560", 
+            hover_color="#b81d3d",
+            corner_radius=10, 
+            height=40,
+            font=get_font(14, "bold")
+        )
+        single_send_button.pack(side="left", padx=15, pady=10)
+        
+        exit_button = ctk.CTkButton(
+            custom_frame, 
+            text=languages[current_lang]["exit_button"], 
+            command=self.on_close, 
+            fg_color="#ef4444", 
+            hover_color="#dc2626",
+            corner_radius=10, 
+            height=40,
+            font=get_font(14, "bold")
+        )
+        exit_button.pack(side="right", padx=15, pady=10)
+        
+        # Update Treeview style with modern colors
+        style = ttk.Style()
+        style.theme_use("clam")
+        style.configure(
+            "Custom.Treeview", 
+            background="#1f2937", 
+            foreground="#e2e8f0", 
+            fieldbackground="#1f2937", 
+            font=get_ttk_font()
+        )
+        style.configure(
+            "Custom.Treeview.Heading", 
+            background="#2d3748", 
+            foreground="#e94560", 
+            font=get_ttk_heading_font()
+        )
+        style.map("Custom.Treeview", background=[("selected", "#4a5568")])
     
     def change_language(self, lang_choice):
         global current_lang
@@ -834,39 +1452,8 @@ class WhatsAppMarketingApp(ctk.CTk):
         sheet = workbook.active
         sheet["A1"] = "Number"
         sheet["B1"] = "Name"
-        sheet['A2'] = "9362135057"
-        sheet['B2'] = "John Doe"
-        sheet['A3'] = "9160304331"
-        sheet['B3'] = "John Doe"
-        sheet['A4'] = "9362062107"
-        sheet['B4'] = "John Doe"
-        sheet['A5'] = "9370317539"
-        sheet['B5'] = "John Doe"
-        sheet['A6'] = "9378195071"
-        sheet['B6'] = "John Doe"
-        sheet['A7'] = "9101903562"
-        sheet['B7'] = "John Doe"
-        sheet['A8'] = "9368527630"
-        sheet['B8'] = "John Doe"
-        sheet['A9'] = "9913037019"
-        sheet['B9'] = "John Doe"
-        sheet['A10'] = "9366462109"
-        sheet['B10'] = "John Doe"
-        sheet['A11'] = "9126602987"
-        sheet['B11'] = "John Doe"
-        sheet['A12'] = "9361175324"
-        sheet['B12'] = "John Doe"
-        sheet['A13'] = "9335103716"
-        sheet['B13'] = "John Doe"
-        sheet['A14'] = "9385617691"
-        sheet['B14'] = "John Doe"
-        sheet['A15'] = "9940582004"
-        sheet['B15'] = "John Doe"
-        sheet['A16'] = "9101287122"
-        sheet['B16'] = "John Doe"
-        sheet['A17'] = "9198887977"
-        sheet['B17'] = "John Doe"
-
+        sheet['A2'] = "9358883639"
+        sheet['B2'] = "Mani agah"
         workbook.save(sample_path)
         messagebox.showinfo(languages[current_lang]["title"], f"Sample Excel saved as {sample_path}")
     
@@ -906,6 +1493,46 @@ class WhatsAppMarketingApp(ctk.CTk):
     
     def placeholder_action(self):
         messagebox.showinfo("Info", "This feature is just a placeholder. You can implement your own logic.")
+    
+    def translate_group_to_arabic(self):
+        for textbox in self.textboxes:
+            original_text = textbox.get("1.0", "end").strip()
+            if original_text:
+                translated = translate_text(original_text, "ar")
+                if translated:
+                    textbox.delete("1.0", "end")
+                    textbox.insert("end", translated)
+                else:
+                    messagebox.showerror("Error", "Translation to Arabic failed.")
+    
+    def translate_group_to_english(self):
+        for textbox in self.textboxes:
+            original_text = textbox.get("1.0", "end").strip()
+            if original_text:
+                translated = translate_text(original_text, "en")
+                if translated:
+                    textbox.delete("1.0", "end")
+                    textbox.insert("end", translated)
+                else:
+                    messagebox.showerror("Error", "Translation to English failed.")
+    
+    def correct_phone_number(self, phone):
+        # Remove any non-digit characters
+        phone = ''.join(filter(str.isdigit, str(phone)))
+        
+        # If the number starts with 0, replace it with 98 (Iran's country code)
+        if phone.startswith('0'):
+            phone = '98' + phone[1:]
+        
+        # If the number doesn't start with a country code, add 98 (Iran's country code)
+        if not phone.startswith('98'):
+            phone = '98' + phone
+        
+        # Ensure the number is at least 12 digits (country code + number)
+        if len(phone) < 12:
+            raise ValueError("Phone number is too short")
+        
+        return phone
     
     def on_close(self):
         if self.driver:
